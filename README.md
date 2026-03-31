@@ -71,7 +71,7 @@ with MCPClient(transport_factory) as mcp_client:
 
 ---
 
-### 4. Outbound Auth (Cognito)
+### 4. Agentcore gateway Inbound Auth (Cognito)
 **What it is:** How the agent proves its identity when calling the Gateway.
 
 ```
@@ -90,18 +90,55 @@ streamablehttp_client(GATEWAY_URL, headers={"Authorization": f"Bearer {access_to
 
 - Uses **OAuth 2.0 client credentials** flow (machine-to-machine)
 - Token is short-lived — fetched fresh on every invocation
-- This is called **outbound auth** — the agent authenticating itself to an external service
+- This is called **Inbound auth** — the agent authenticating itself to an external service
 
 ---
 
-### 5. Inbound Auth (IAM — automatic)
-**What it is:** How AgentCore protects your agent from unauthorized callers.
+### 5. Agentcore Gateway Outbound Auth (IAM)
+**What it is:** How AgentCore Gateway connects securely to your Lambda function.
 
-- You don't write any code for this
-- AgentCore Runtime uses **AWS IAM** to verify every incoming request
-- Only callers with the right AWS permissions can reach your agent
-- This is called **inbound auth** — protecting the door into your agent
+-  AgentCore Gateway uses **AWS IAM** to authenticate its connection to your Lambda
+- Only the Gateway (with the right IAM permissions) can invoke your Lambda function
+- This is called **Outbound auth** — ensuring only authorized services can trigger your Lambda
 
+---
+### 6. Tool Discovery via Inline Schema
+**What it is:** How AgentCore Gateway knows what tools your Lambda exposes.
+
+When you register a Lambda with the Gateway, you don't just point to the function —
+you also provide an **inline schema** that describes the tool:
+```json
+{
+  "name": "checkAvailability",
+  "description": "Check if a table is available at a given time",
+  "parameters": {
+    "date": { "type": "string" },
+    "time": { "type": "string" },
+    "party_size": { "type": "integer" }
+  }
+}
+```
+
+- This schema is registered **once** when you set up the Gateway
+- The Gateway reads it and **exposes the tool as MCP**
+- When the agent connects via MCP, it discovers this tool automatically
+- The agent never talks to Lambda directly — it only sees the MCP interface
+```
+Lambda (with inline schema)
+    │
+    │  registered into
+    ▼
+AgentCore Gateway  ──→  exposes as MCP tool
+                            │
+                            │  agent discovers at runtime
+                            ▼
+                        Strands Agent knows:
+                        "I have a checkAvailability tool"
+```
+
+**This is where MCP becomes meaningful** — the inline schema is what gets
+translated into an MCP tool definition that the agent can discover and call
+without any hardcoding.
 ---
 
 ## How All the Pieces Fit Together
@@ -111,7 +148,7 @@ User Message
     │
     ▼
 ┌─────────────────────────────┐
-│   AgentCore Runtime         │  ← inbound auth (IAM) handled here
+│   AgentCore Runtime         │  
 │   @app.entrypoint           │
 └────────────┬────────────────┘
              │
@@ -138,7 +175,7 @@ User Message
 
 ```
 1. User sends a message
-2. AgentCore Runtime receives it → verifies IAM auth → calls invoke()
+2. AgentCore Runtime receives it 
 3. invoke() fetches a Cognito token
 4. MCPClient connects to Gateway using that token
 5. Agent discovers available tools (checkAvailability, bookTable)
@@ -158,8 +195,8 @@ User Message
 | **AgentCore Runtime** | Hosts your agent — no server management needed |
 | **AgentCore Gateway** | Connects agent to tools (Lambda) via MCP |
 | **MCP** | Standard protocol for agent tool discovery |
-| **Inbound Auth** | IAM protects your agent automatically |
-| **Outbound Auth** | Cognito token lets agent call the Gateway |
+| **Agent Outbound Auth** | Cognito token lets agent call the Gateway |
+| **Gateway Inbound Auth** | Gateway uses the IAM role to call the lambda |
 | **Strands Agent** | The AI framework used to build the agent logic |
 
 ---
@@ -171,7 +208,7 @@ User Message
 pip install bedrock-agentcore strands-agents bedrock-agentcore-starter-toolkit
 
 # Configure AgentCore
-agentcore configure -e agent-core-app_create.py --disable-memory
+agentcore configure -e restruant_booking_agent.py --disable-memory
 
 # Deploy
 agentcore launch
