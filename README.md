@@ -171,6 +171,9 @@ User Message
 
 ---
 
+## Arechitecture
+![Agentcore (3)](https://github.com/user-attachments/assets/74698333-74fd-4e18-a57f-98e4bc7870a6)
+
 ## The Lifecycle of One Agent Call
 
 ```
