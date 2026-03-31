@@ -1,0 +1,4 @@
+os 
+requests
+strands-agents
+strands-agents-tools

@@ -1,0 +1,68 @@
+[
+  {
+    "name": "checkAvailability",
+    "description": "Check if a table is available at the restaurant for a given date, time, and party size.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "Reservation date in YYYY-MM-DD format, e.g. 2026-03-15"
+        },
+        "time": {
+          "type": "string",
+          "description": "Reservation time in HH:MM 24-hour format, e.g. 19:00"
+        },
+        "partySize": {
+          "type": "integer",
+          "description": "Number of people in the party"
+        }
+      },
+      "required": [
+        "date",
+        "time",
+        "partySize"
+      ]
+    }
+  },
+  {
+    "name": "bookTable",
+    "description": "Book a restaurant table reservation. Always check availability first before calling this tool.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "Reservation date in YYYY-MM-DD format"
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Customer contact phone number"
+        },
+        "specialRequests": {
+          "type": "string",
+          "description": "Optional dietary restrictions or special requests"
+        },
+        "time": {
+          "type": "string",
+          "description": "Reservation time in HH:MM 24-hour format"
+        },
+        "partySize": {
+          "type": "integer",
+          "description": "Number of people in the party"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Full name of the customer making the reservation"
+        }
+      },
+      "required": [
+        "date",
+        "time",
+        "partySize",
+        "customerName",
+        "customerPhone"
+      ]
+    }
+  }
+]
